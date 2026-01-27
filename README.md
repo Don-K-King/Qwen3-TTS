@@ -418,6 +418,47 @@ qwen-tts-demo Qwen/Qwen3-TTS-12Hz-1.7B-Base \
 
 And open `https://<your-ip>:8000` to experience it. If your browser shows a warning, it’s expected for self-signed certificates. For production, use a real certificate.
 
+### HTTP API (FastAPI)
+
+This repository now includes a lightweight HTTP API wrapper (FastAPI) that exposes a single endpoint at
+`/v1/audio/speech` and returns a WAV payload. It supports:
+
+- **Voice clone** (Base models) via `ref_audio` + `ref_text` (or `x_vector_only_mode=true`).
+- **Custom voice** via `voice` (CustomVoice models).
+- **Voice design** via `instruct` (VoiceDesign models).
+
+Run locally (requires a GPU runtime and model weights download on first run):
+
+```bash
+qwen-tts-api
+```
+
+Example request (Base model voice clone):
+
+```bash
+curl -X POST http://localhost:8000/v1/audio/speech \\
+  -H 'Content-Type: application/json' \\
+  -d '{
+    "input": "Hallo Welt!",
+    "ref_audio": "https://qianwen-res.oss-cn-beijing.aliyuncs.com/Qwen3-TTS-Repo/clone.wav",
+    "ref_text": "Hello, this is a reference recording.",
+    "response_format": "wav"
+  }' --output output.wav
+```
+
+**Security note:** set `QWEN_TTS_AUTH_TOKEN` to require `Authorization: Bearer <token>` (or `X-API-Key`) on each request.
+
+### Docker Compose (Local GPU)
+
+For local deployment with a pinned GPU, copy `.env.example` to `.env`, set `NVIDIA_VISIBLE_DEVICES` (and
+`CUDA_VISIBLE_DEVICES`) to the desired GPU index, and run:
+
+```bash
+docker compose up --build
+```
+
+The Compose service uses a persistent Hugging Face cache volume to avoid re-downloading weights.
+
 ### DashScope API Usage
 
 To further explore Qwen3-TTS, we encourage you to try our DashScope API for a faster and more efficient experience. For detailed API information and documentation, please refer to the following:
