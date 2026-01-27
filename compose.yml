@@ -1,0 +1,29 @@
+services:
+  qwen3-tts-api:
+    build:
+      context: .
+    ports:
+      - "${QWEN_TTS_PORT:-8000}:8000"
+    env_file:
+      - .env
+    environment:
+      QWEN_TTS_MODEL_ID: ${QWEN_TTS_MODEL_ID:-Qwen/Qwen3-TTS-12Hz-1.7B-Base}
+      QWEN_TTS_DEVICE_MAP: ${QWEN_TTS_DEVICE_MAP:-cuda}
+      QWEN_TTS_DTYPE: ${QWEN_TTS_DTYPE:-bfloat16}
+      QWEN_TTS_MAX_INPUT_CHARS: ${QWEN_TTS_MAX_INPUT_CHARS:-2000}
+      QWEN_TTS_DEFAULT_LANGUAGE: ${QWEN_TTS_DEFAULT_LANGUAGE:-Auto}
+      QWEN_TTS_AUTH_TOKEN: ${QWEN_TTS_AUTH_TOKEN:-}
+      HF_HOME: /data/hf
+      CUDA_VISIBLE_DEVICES: ${CUDA_VISIBLE_DEVICES:-0}
+      NVIDIA_VISIBLE_DEVICES: ${NVIDIA_VISIBLE_DEVICES:-0}
+    volumes:
+      - hf-cache:/data/hf
+    device_requests:
+      - driver: nvidia
+        count: 1
+        capabilities: [gpu]
+        device_ids:
+          - "${NVIDIA_VISIBLE_DEVICES:-0}"
+
+volumes:
+  hf-cache:
