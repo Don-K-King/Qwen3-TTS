@@ -31,7 +31,7 @@ class SpeechRequest(BaseModel):
 class AppConfig(BaseModel):
     model_id: str
     device_map: Optional[str]
-    dtype: Optional[torch.dtype]
+    dtype: Optional[str]
     max_input_chars: int
     auth_token: Optional[str]
     default_language: str
@@ -39,6 +39,16 @@ class AppConfig(BaseModel):
 
 
 app = FastAPI(title="Qwen3-TTS HTTP API", version="0.1.0")
+
+
+DTYPE_MAP = {
+    "float16": torch.float16,
+    "fp16": torch.float16,
+    "bfloat16": torch.bfloat16,
+    "bf16": torch.bfloat16,
+    "float32": torch.float32,
+    "fp32": torch.float32,
+}
 
 
 @app.on_event("startup")
@@ -49,7 +59,7 @@ def _load_model() -> None:
     if config.device_map:
         model_kwargs["device_map"] = config.device_map
     if config.dtype is not None:
-        model_kwargs["torch_dtype"] = config.dtype
+        model_kwargs["torch_dtype"] = DTYPE_MAP[config.dtype]
     logger.info("Loading Qwen3-TTS model: %s", config.model_id)
     app.state.model = Qwen3TTSModel.from_pretrained(config.model_id, **model_kwargs)
 
@@ -63,7 +73,7 @@ def _load_config() -> AppConfig:
     model_id = os.getenv("QWEN_TTS_MODEL_ID", "Qwen/Qwen3-TTS-12Hz-1.7B-Base")
     device_map = os.getenv("QWEN_TTS_DEVICE_MAP")
     dtype_raw = os.getenv("QWEN_TTS_DTYPE")
-    dtype = _parse_dtype(dtype_raw)
+    dtype = _normalize_dtype(dtype_raw)
     max_input_chars = int(os.getenv("QWEN_TTS_MAX_INPUT_CHARS", "2000"))
     auth_token = os.getenv("QWEN_TTS_AUTH_TOKEN")
     default_language = os.getenv("QWEN_TTS_DEFAULT_LANGUAGE", "Auto")
@@ -79,16 +89,12 @@ def _load_config() -> AppConfig:
     )
 
 
-def _parse_dtype(dtype_raw: Optional[str]) -> Optional[torch.dtype]:
+def _normalize_dtype(dtype_raw: Optional[str]) -> Optional[str]:
     if not dtype_raw:
         return None
     normalized = dtype_raw.strip().lower()
-    if normalized in {"float16", "fp16"}:
-        return torch.float16
-    if normalized in {"bfloat16", "bf16"}:
-        return torch.bfloat16
-    if normalized in {"float32", "fp32"}:
-        return torch.float32
+    if normalized in DTYPE_MAP:
+        return normalized
     raise ValueError(f"Unsupported QWEN_TTS_DTYPE: {dtype_raw}")
 
 
