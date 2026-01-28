@@ -450,15 +450,21 @@ curl -X POST http://localhost:8000/v1/audio/speech \\
 
 ### Docker Compose (Local GPU)
 
-For local deployment with a pinned GPU, copy `.env.example` to `.env`, set `NVIDIA_VISIBLE_DEVICES` (and
-`CUDA_VISIBLE_DEVICES`) to the desired GPU index list (not UUIDs), and run:
+For local deployment with a pinned GPU, copy `.env.example` to `.env`, set `NVIDIA_VISIBLE_DEVICES`
+to the desired GPU UUID(s) or index list, and run:
 
 ```bash
 docker compose up --build
 ```
 
 The Compose service uses a persistent Hugging Face cache volume to avoid re-downloading weights, and
-relies on the NVIDIA Container Toolkit on the host for GPU access.
+relies on the NVIDIA Container Toolkit on the host for GPU access via the `deploy.resources` device
+reservation.
+If your Docker Compose version ignores the `deploy` section, use a Swarm deployment or switch to
+`device_requests` in Compose as an alternative.
+
+If you are running on a CPU-only host, set `QWEN_TTS_DEVICE_MAP=cpu` and `QWEN_TTS_DTYPE=float32`,
+or rely on the server's automatic fallback from CUDA to CPU when no GPU is detected.
 
 #### Docker Compose (Evido Network)
 

@@ -14,12 +14,19 @@ services:
       QWEN_TTS_DEFAULT_LANGUAGE: ${QWEN_TTS_DEFAULT_LANGUAGE:-Auto}
       QWEN_TTS_AUTH_TOKEN: ${QWEN_TTS_AUTH_TOKEN:-}
       HF_HOME: /data/hf
-      CUDA_VISIBLE_DEVICES: ${CUDA_VISIBLE_DEVICES}
       NVIDIA_VISIBLE_DEVICES: ${NVIDIA_VISIBLE_DEVICES}
     expose:
       - "8000"
     volumes:
       - hf-cache:/data/hf
+    deploy:
+      resources:
+        reservations:
+          devices:
+            - driver: nvidia
+              capabilities: [gpu]
+              device_ids:
+                - "${NVIDIA_VISIBLE_DEVICES}"
     networks:
       - evido-live-translate
 

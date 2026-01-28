@@ -56,10 +56,12 @@ def _load_model() -> None:
     config = _load_config()
     app.state.config = config
     model_kwargs = {}
-    if config.device_map:
-        model_kwargs["device_map"] = config.device_map
-    if config.dtype is not None:
-        model_kwargs["torch_dtype"] = DTYPE_MAP[config.dtype]
+    resolved_device_map = _resolve_device_map(config.device_map)
+    if resolved_device_map:
+        model_kwargs["device_map"] = resolved_device_map
+    resolved_dtype = _resolve_dtype(config.dtype)
+    if resolved_dtype is not None:
+        model_kwargs["dtype"] = DTYPE_MAP[resolved_dtype]
     logger.info("Loading Qwen3-TTS model: %s", config.model_id)
     app.state.model = Qwen3TTSModel.from_pretrained(config.model_id, **model_kwargs)
 
@@ -96,6 +98,32 @@ def _normalize_dtype(dtype_raw: Optional[str]) -> Optional[str]:
     if normalized in DTYPE_MAP:
         return normalized
     raise ValueError(f"Unsupported QWEN_TTS_DTYPE: {dtype_raw}")
+
+
+def _resolve_device_map(device_map: Optional[str]) -> Optional[str]:
+    if not device_map:
+        return None
+    normalized = device_map.strip()
+    if torch.cuda.is_available():
+        return normalized
+    if "cuda" in normalized.lower():
+        logger.warning("CUDA requested via QWEN_TTS_DEVICE_MAP=%s, but no GPU detected; using CPU instead.", device_map)
+        return "cpu"
+    return normalized
+
+
+def _resolve_dtype(dtype: Optional[str]) -> Optional[str]:
+    if dtype is None:
+        return None
+    if torch.cuda.is_available():
+        return dtype
+    if dtype in {"float16", "fp16", "bfloat16", "bf16"}:
+        logger.warning(
+            "Low-precision dtype %s requested without CUDA; falling back to float32 for CPU stability.",
+            dtype,
+        )
+        return "float32"
+    return dtype
 
 
 def _authorize(
