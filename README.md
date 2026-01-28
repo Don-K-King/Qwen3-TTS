@@ -459,6 +459,19 @@ docker compose up --build
 
 The Compose service uses a persistent Hugging Face cache volume to avoid re-downloading weights.
 
+#### Docker Compose (Evido Network)
+
+When running alongside Evido on the same Docker host, keep the service internal and attach it to the
+external Evido network (commonly `evido-live-translate`). The container name is fixed so the mapper can
+reach `http://evido-qwen3-tts:8000/...`, and no host ports are published. If you need GPU support,
+ensure the NVIDIA runtime is available on the host.
+
+To verify the network name on the host:
+
+```bash
+docker network ls | grep evido
+```
+
 ### DashScope API Usage
 
 To further explore Qwen3-TTS, we encourage you to try our DashScope API for a faster and more efficient experience. For detailed API information and documentation, please refer to the following:

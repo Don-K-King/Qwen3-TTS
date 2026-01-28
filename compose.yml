@@ -2,10 +2,11 @@ services:
   qwen3-tts-api:
     build:
       context: .
-    ports:
-      - "${QWEN_TTS_PORT:-8000}:8000"
+    container_name: evido-qwen3-tts
     env_file:
       - .env
+    # Required when using NVIDIA GPUs via Docker runtime.
+    runtime: nvidia
     environment:
       QWEN_TTS_MODEL_ID: ${QWEN_TTS_MODEL_ID:-Qwen/Qwen3-TTS-12Hz-1.7B-Base}
       QWEN_TTS_DEVICE_MAP: ${QWEN_TTS_DEVICE_MAP:-cuda}
@@ -16,6 +17,8 @@ services:
       HF_HOME: /data/hf
       CUDA_VISIBLE_DEVICES: ${CUDA_VISIBLE_DEVICES:-0}
       NVIDIA_VISIBLE_DEVICES: ${NVIDIA_VISIBLE_DEVICES:-0}
+    expose:
+      - "8000"
     volumes:
       - hf-cache:/data/hf
     device_requests:
@@ -24,6 +27,12 @@ services:
         capabilities: [gpu]
         device_ids:
           - "${NVIDIA_VISIBLE_DEVICES:-0}"
+    networks:
+      - evido-live-translate
 
 volumes:
   hf-cache:
+
+networks:
+  evido-live-translate:
+    external: true
