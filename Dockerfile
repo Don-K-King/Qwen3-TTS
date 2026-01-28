@@ -18,9 +18,9 @@ COPY qwen_tts /app/qwen_tts
 
 RUN pip install --no-cache-dir --upgrade pip \
     && pip install --no-cache-dir \
-        torch==2.3.1+cu121 \
-        torchaudio==2.3.1+cu121 \
-        --index-url https://download.pytorch.org/whl/cu121 \
+        torch==2.6.0+cu124 \
+        torchaudio==2.6.0+cu124 \
+        --index-url https://download.pytorch.org/whl/cu124 \
     && pip install --no-cache-dir -e .
 
 EXPOSE 8000

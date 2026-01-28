@@ -463,6 +463,10 @@ reservation.
 If your Docker Compose version ignores the `deploy` section, use a Swarm deployment or switch to
 `device_requests` in Compose as an alternative.
 
+**GPU compatibility note:** The container image installs a CUDA 12.4-capable PyTorch build (torch
+2.6.x + cu124) to cover Blackwell GPUs (sm_120). If you build a custom image, ensure your torch/CUDA
+stack supports your GPU architecture to avoid runtime `no kernel image` errors.
+
 If you are running on a CPU-only host, set `QWEN_TTS_DEVICE_MAP=cpu` and `QWEN_TTS_DTYPE=float32`,
 or rely on the server's automatic fallback from CUDA to CPU when no GPU is detected.
 
