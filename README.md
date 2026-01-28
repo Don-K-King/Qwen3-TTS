@@ -451,13 +451,14 @@ curl -X POST http://localhost:8000/v1/audio/speech \\
 ### Docker Compose (Local GPU)
 
 For local deployment with a pinned GPU, copy `.env.example` to `.env`, set `NVIDIA_VISIBLE_DEVICES` (and
-`CUDA_VISIBLE_DEVICES`) to the desired GPU index, and run:
+`CUDA_VISIBLE_DEVICES`) to the desired GPU index list (not UUIDs), and run:
 
 ```bash
 docker compose up --build
 ```
 
-The Compose service uses a persistent Hugging Face cache volume to avoid re-downloading weights.
+The Compose service uses a persistent Hugging Face cache volume to avoid re-downloading weights, and
+relies on the NVIDIA Container Toolkit on the host for GPU access.
 
 #### Docker Compose (Evido Network)
 
