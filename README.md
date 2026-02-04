@@ -418,6 +418,81 @@ qwen-tts-demo Qwen/Qwen3-TTS-12Hz-1.7B-Base \
 
 And open `https://<your-ip>:8000` to experience it. If your browser shows a warning, it’s expected for self-signed certificates. For production, use a real certificate.
 
+### HTTP API (FastAPI)
+
+This repository now includes a lightweight HTTP API wrapper (FastAPI) that exposes a single endpoint at
+`/v1/audio/speech` and returns a WAV payload. It supports:
+
+- **Voice clone** (Base models) via `ref_audio` + `ref_text` (or `x_vector_only_mode=true`).
+- **Custom voice** via `voice` (CustomVoice models).
+- **Voice design** via `instruct` (VoiceDesign models).
+
+Run locally (requires a GPU runtime and model weights download on first run):
+
+```bash
+qwen-tts-api
+```
+
+Example request (Base model voice clone):
+
+```bash
+curl -X POST http://localhost:8000/v1/audio/speech \\
+  -H 'Content-Type: application/json' \\
+  -d '{
+    "input": "Hallo Welt!",
+    "ref_audio": "https://qianwen-res.oss-cn-beijing.aliyuncs.com/Qwen3-TTS-Repo/clone.wav",
+    "ref_text": "Hello, this is a reference recording.",
+    "response_format": "wav"
+  }' --output output.wav
+```
+
+**Security note:** set `QWEN_TTS_AUTH_TOKEN` to require `Authorization: Bearer <token>` (or `X-API-Key`) on each request.
+
+### Docker Compose (Local GPU)
+
+For local deployment with a pinned GPU, copy `.env.example` to `.env`, set `NVIDIA_VISIBLE_DEVICES`
+to the desired GPU UUID(s) or index list, and run:
+
+```bash
+docker compose up --build
+```
+
+The Compose service uses a persistent Hugging Face cache volume to avoid re-downloading weights, and
+relies on the NVIDIA Container Toolkit on the host for GPU access via the `deploy.resources` device
+reservation.
+If your Docker Compose version ignores the `deploy` section, use a Swarm deployment or switch to
+`device_requests` in Compose as an alternative.
+
+**GPU compatibility note:** The container image installs a CUDA 12.8-capable PyTorch build (torch
+2.7.0 + cu128). Blackwell (sm_120) GPUs require CUDA 12.8+ builds that include sm_120 kernels; if
+your environment lacks them, you'll see `no kernel image is available for execution on the device`.
+If you build a custom image, ensure your torch/CUDA stack matches your GPU architecture. When
+2.7.0+cu128 wheels are unavailable in your build context, use a nightly/preview build that explicitly
+lists sm_120 support and confirm via the smoke test below.
+
+To validate the GPU stack, run the smoke test (matmul + synchronize) inside the container or host
+environment:
+
+```bash
+python examples/gpu_smoke_test.py
+```
+
+If you are running on a CPU-only host, set `QWEN_TTS_DEVICE_MAP=cpu` and `QWEN_TTS_DTYPE=float32`,
+or rely on the server's automatic fallback from CUDA to CPU when no GPU is detected.
+
+#### Docker Compose (Evido Network)
+
+When running alongside Evido on the same Docker host, keep the service internal and attach it to the
+external Evido network (commonly `evido-live-translate`). The container name is fixed so the mapper can
+reach `http://evido-qwen3-tts:8000/...`, and no host ports are published. If you need GPU support,
+ensure the NVIDIA runtime is available on the host.
+
+To verify the network name on the host:
+
+```bash
+docker network ls | grep evido
+```
+
 ### DashScope API Usage
 
 To further explore Qwen3-TTS, we encourage you to try our DashScope API for a faster and more efficient experience. For detailed API information and documentation, please refer to the following:
