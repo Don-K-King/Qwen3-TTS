@@ -3,6 +3,7 @@ services:
     build:
       context: .
     container_name: evido-qwen3-tts
+    restart: unless-stopped
     env_file:
       - .env
     # GPU access is provided by the NVIDIA Container Toolkit on the host.

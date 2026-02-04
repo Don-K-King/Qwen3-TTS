@@ -460,6 +460,8 @@ docker compose up --build
 The Compose service uses a persistent Hugging Face cache volume to avoid re-downloading weights, and
 relies on the NVIDIA Container Toolkit on the host for GPU access via the `deploy.resources` device
 reservation.
+The service is configured with `restart: unless-stopped` so it automatically comes back after host
+reboots or daemon restarts until you explicitly stop it.
 If your Docker Compose version ignores the `deploy` section, use a Swarm deployment or switch to
 `device_requests` in Compose as an alternative.
 
@@ -486,6 +488,8 @@ When running alongside Evido on the same Docker host, keep the service internal 
 external Evido network (commonly `evido-live-translate`). The container name is fixed so the mapper can
 reach `http://evido-qwen3-tts:8000/...`, and no host ports are published. If you need GPU support,
 ensure the NVIDIA runtime is available on the host.
+The Compose service uses `restart: unless-stopped` so the container returns after daemon restarts
+unless it has been intentionally stopped.
 
 To verify the network name on the host:
 
